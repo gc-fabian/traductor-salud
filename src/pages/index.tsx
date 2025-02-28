@@ -24,10 +24,19 @@ export default function Home() {
         method: "POST",
         body: formData,
       });
-
-      const data = await response.json();
+    
+      const textResponse = await response.text();
+      console.log("Texto recibido:", textResponse);
+      let data;
+      try {
+        data = JSON.parse(textResponse);
+      } catch (parseError) {
+        console.error("Error al parsear JSON:", parseError, textResponse);
+        throw new Error("Respuesta de API no es JSON");
+      }
+    
       console.log("Respuesta recibida:", data);
-
+    
       if (response.ok) {
         setOriginalText(data.originalText);
         setTranslatedText(data.translatedText);
@@ -36,9 +45,8 @@ export default function Home() {
       }
     } catch (error) {
       console.error("Error en la solicitud:", error);
-    } finally {
-      setIsLoading(false);
     }
+    
   };
 
   return (
