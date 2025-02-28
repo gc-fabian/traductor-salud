@@ -61,7 +61,11 @@ export default function Home() {
       </label>
 
       <AudioRecorder onRecorded={handleAudioRecorded} isLoading={isLoading} />
-      <TranslationDisplay originalText={originalText} translatedText={translatedText} />
+      <TranslationDisplay 
+        originalText={originalText} 
+        translatedText={translatedText} 
+        targetLang={targetLang} 
+      />
     </div>
   );
 }
