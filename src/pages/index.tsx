@@ -1,114 +1,67 @@
-import Image from "next/image";
-import { Geist, Geist_Mono } from "next/font/google";
+import dynamic from "next/dynamic";
+import { useState } from "react";
+import TranslationDisplay from "../components/TranslationDisplay";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+// Cargar AudioRecorder solo en el cliente (sin SSR)
+const AudioRecorder = dynamic(() => import("../components/AudioRecorder"), { ssr: false });
 
 export default function Home() {
-  return (
-    <div
-      className={`${geistSans.variable} ${geistMono.variable} grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]`}
-    >
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/pages/index.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const [originalText, setOriginalText] = useState("");
+  const [translatedText, setTranslatedText] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [targetLang, setTargetLang] = useState("EN"); // Idioma de salida
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
+  const handleAudioRecorded = async (audioBlob: Blob) => {
+    console.log("Audio grabado, enviando al backend...");
+    setIsLoading(true);
+    const formData = new FormData();
+    formData.append("audio", audioBlob, "audio.webm");
+    formData.append("targetLang", targetLang);
+
+    try {
+      console.log("Enviando solicitud a /api/transcribe...");
+      const response = await fetch("/api/transcribe", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await response.json();
+      console.log("Respuesta recibida:", data);
+
+      if (response.ok) {
+        setOriginalText(data.originalText);
+        setTranslatedText(data.translatedText);
+      } else {
+        console.error("Error en la transcripción/traducción:", data.error);
+      }
+    } catch (error) {
+      console.error("Error en la solicitud:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 text-white">
+      <h1 className="text-2xl font-bold mb-4">Transcripción y Traducción de Audio</h1>
+
+      <label className="mb-2">
+        Seleccionar idioma de salida:
+        <select
+          className="ml-2 p-2 bg-gray-700 rounded"
+          value={targetLang}
+          onChange={(e) => setTargetLang(e.target.value)}
         >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+          <option value="EN">Inglés</option>
+          <option value="ES">Español</option>
+          <option value="FR">Francés</option>
+          <option value="DE">Alemán</option>
+          <option value="IT">Italiano</option>
+        </select>
+      </label>
+
+      <AudioRecorder onRecorded={handleAudioRecorded} isLoading={isLoading} />
+      <TranslationDisplay originalText={originalText} translatedText={translatedText} />
     </div>
   );
 }
