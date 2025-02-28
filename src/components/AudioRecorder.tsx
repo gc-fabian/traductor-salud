@@ -7,9 +7,7 @@ interface AudioRecorderProps {
 }
 
 const AudioRecorder: React.FC<AudioRecorderProps> = ({ onRecorded, isLoading }) => {
-  const [isRecording, setIsRecording] = useState(false);
-  
-  const { startRecording, stopRecording, mediaBlobUrl, clearBlobUrl } = useReactMediaRecorder({
+  const { startRecording, stopRecording, clearBlobUrl } = useReactMediaRecorder({
     audio: true,
     onStop: async (blobUrl) => {
       console.log("Grabación detenida, URL del blob:", blobUrl);
@@ -29,16 +27,19 @@ const AudioRecorder: React.FC<AudioRecorderProps> = ({ onRecorded, isLoading }) 
       }
     }
   });
+  
+  const [isRecording, setIsRecording] = useState(false);
 
   const handleClick = () => {
     if (isRecording) {
       console.log("Deteniendo grabación...");
       stopRecording();
+      setIsRecording(false);
     } else {
       console.log("Iniciando grabación...");
       startRecording();
+      setIsRecording(true);
     }
-    setIsRecording(!isRecording);
   };
 
   return (
