@@ -10,7 +10,6 @@ const TranslationDisplay: React.FC<TranslationDisplayProps> = ({ originalText, t
   useEffect(() => {
     if (translatedText) {
       const utterance = new SpeechSynthesisUtterance(translatedText);
-      // Map the language codes to BCP 47 language tags
       const langMap: Record<string, string> = {
         EN: "en-US",
         ES: "es-ES",
@@ -21,7 +20,6 @@ const TranslationDisplay: React.FC<TranslationDisplayProps> = ({ originalText, t
       };
       utterance.lang = langMap[targetLang] || "en-US";
       
-      // Try to select a matching voice if available
       const voices = window.speechSynthesis.getVoices();
       const selectedVoice = voices.find(voice => voice.lang === utterance.lang);
       if (selectedVoice) {

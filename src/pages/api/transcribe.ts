@@ -23,6 +23,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   }
 
   try {
+    console.log("Receiving file...");
     const { fields, files } = await parseForm(req);
 
     const targetLang = Array.isArray(fields.targetLang)
@@ -31,7 +32,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     const audioFile = files.audio;
 
     if (!audioFile) {
-      console.error("❌ No audio file received");
+      console.error("No audio file received");
       return res.status(400).json({ error: 'No audio file received' });
     }
 
@@ -41,34 +42,31 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     // Convert the buffer to a File object (requires Node 18+)
     const fileObject = new File([buffer], file.originalFilename || 'audio.wav', { type: 'audio/wav' });
 
+    console.log("Sending to OpenAI Whisper...");
     const transcriptionResponse = await openai.audio.transcriptions.create({
       file: fileObject,
       model: 'whisper-1',
     });
 
     const originalText = transcriptionResponse.text;
+    console.log("Transcribed text:", originalText);
 
-    // Modified prompt for Deepseek:
+    console.log("Sending to Deepseek for translation...");
     const deepseekResponse = await deepseek.chat.completions.create({
       model: 'deepseek-chat',
       messages: [
-        {
-          role: 'system',
-          content:
-            "You are a translator. Translate the following text exactly and return only the translated text, without any additional commentary or formatting."
-        },
-        {
-          role: 'user',
-          content: `Translate this text to ${targetLang}: "${originalText}"`
-        }
+        { role: 'system', content: "You are a translator. Translate the following text exactly and return only the translated text, without any additional commentary or formatting." },
+        { role: 'user', content: `Translate this text to ${targetLang}: "${originalText}"` },
       ],
       temperature: 0,
     });
 
     const translatedText = deepseekResponse.choices[0].message?.content || '';
+    console.log("Translation obtained:", translatedText);
+
     res.status(200).json({ originalText, translatedText });
   } catch (error) {
-    console.error("❌ Error in transcription/translation:", error);
+    console.error("Error in transcription/translation:", error);
     res.status(500).json({ error: 'Error processing the request' });
   }
 };

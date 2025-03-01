@@ -1,3 +1,4 @@
+// components/AudioRecorder.tsx
 import React, { useState } from 'react';
 import { useReactMediaRecorder } from "react-media-recorder";
 
@@ -10,19 +11,15 @@ const AudioRecorder: React.FC<AudioRecorderProps> = ({ onRecorded, isLoading }) 
   const { startRecording, stopRecording, clearBlobUrl } = useReactMediaRecorder({
     audio: true,
     onStop: async (blobUrl) => {
-      //console.log("Recording stopped, blob URL:", blobUrl);
       if (blobUrl) {
         try {
           const response = await fetch(blobUrl);
           const blob = await response.blob();
-          //console.log("Audio blob obtained, sending to onRecorded...");
           onRecorded(blob);
           clearBlobUrl();
         } catch (error) {
           console.error("Error processing audio blob:", error);
         }
-      } else {
-        console.warn("No valid blob URL generated.");
       }
     }
   });
@@ -31,11 +28,9 @@ const AudioRecorder: React.FC<AudioRecorderProps> = ({ onRecorded, isLoading }) 
 
   const handleClick = () => {
     if (isRecording) {
-      //console.log("Stopping recording...");
       stopRecording();
       setIsRecording(false);
     } else {
-      //console.log("Starting recording...");
       startRecording();
       setIsRecording(true);
     }
@@ -43,13 +38,13 @@ const AudioRecorder: React.FC<AudioRecorderProps> = ({ onRecorded, isLoading }) 
 
   return (
     <button
-      className={`w-24 h-24 rounded-full text-white text-xl focus:outline-none transition-all duration-300 
-      ${isRecording ? 'bg-green-500 animate-pulse' : 'bg-red-500'} 
-      ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+      className={`w-[30vh] h-[30vh] rounded-full text-white text-2xl font-bold flex items-center justify-center shadow-xl transition-transform duration-200
+        ${isRecording ? 'bg-gradient-to-br from-green-500 to-green-700 animate-pulse' : 'bg-gradient-to-br from-blue-500 to-blue-700 hover:from-blue-600 hover:to-blue-800'}
+        ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
       onClick={handleClick}
       disabled={isLoading}
     >
-      {isLoading ? '...' : isRecording ? 'Recording' : 'Start'}
+      {isLoading ? '...' : isRecording ? 'Recording' : 'Record'}
     </button>
   );
 };
