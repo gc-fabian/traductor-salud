@@ -10,20 +10,19 @@ const AudioRecorder: React.FC<AudioRecorderProps> = ({ onRecorded, isLoading }) 
   const { startRecording, stopRecording, clearBlobUrl } = useReactMediaRecorder({
     audio: true,
     onStop: async (blobUrl) => {
-      console.log("Grabación detenida, URL del blob:", blobUrl);
-      
+      //console.log("Recording stopped, blob URL:", blobUrl);
       if (blobUrl) {
         try {
           const response = await fetch(blobUrl);
           const blob = await response.blob();
-          console.log("Blob de audio obtenido, enviando a la función onRecorded...");
+          //console.log("Audio blob obtained, sending to onRecorded...");
           onRecorded(blob);
           clearBlobUrl();
         } catch (error) {
-          console.error("Error al procesar el blob de audio:", error);
+          console.error("Error processing audio blob:", error);
         }
       } else {
-        console.warn("No se generó un blobUrl válido.");
+        console.warn("No valid blob URL generated.");
       }
     }
   });
@@ -32,11 +31,11 @@ const AudioRecorder: React.FC<AudioRecorderProps> = ({ onRecorded, isLoading }) 
 
   const handleClick = () => {
     if (isRecording) {
-      console.log("Deteniendo grabación...");
+      //console.log("Stopping recording...");
       stopRecording();
       setIsRecording(false);
     } else {
-      console.log("Iniciando grabación...");
+      //console.log("Starting recording...");
       startRecording();
       setIsRecording(true);
     }
@@ -50,7 +49,7 @@ const AudioRecorder: React.FC<AudioRecorderProps> = ({ onRecorded, isLoading }) 
       onClick={handleClick}
       disabled={isLoading}
     >
-      {isLoading ? '...' : isRecording ? 'Grabando' : 'Iniciar'}
+      {isLoading ? '...' : isRecording ? 'Recording' : 'Start'}
     </button>
   );
 };

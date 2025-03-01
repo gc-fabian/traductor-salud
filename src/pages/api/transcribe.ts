@@ -19,53 +19,57 @@ const parseForm = (req: NextApiRequest) =>
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Método no permitido' });
+    return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
   try {
-    console.log("📩 Recibiendo archivo...");
     const { fields, files } = await parseForm(req);
 
-    const targetLang = Array.isArray(fields.targetLang) ? fields.targetLang[0] : fields.targetLang || 'EN';
+    const targetLang = Array.isArray(fields.targetLang)
+      ? fields.targetLang[0]
+      : fields.targetLang || 'EN';
     const audioFile = files.audio;
 
     if (!audioFile) {
-      console.error("❌ No se recibió el archivo de audio");
-      return res.status(400).json({ error: 'No se recibió el archivo de audio' });
+      console.error("❌ No audio file received");
+      return res.status(400).json({ error: 'No audio file received' });
     }
 
     const file: FormidableFile = Array.isArray(audioFile) ? audioFile[0] : audioFile;
-    
-    // ⚠️ Importante: Leer el archivo como Buffer y convertirlo a un File
     const buffer = fs.readFileSync(file.filepath);
+
+    // Convert the buffer to a File object (requires Node 18+)
     const fileObject = new File([buffer], file.originalFilename || 'audio.wav', { type: 'audio/wav' });
 
-    console.log("📤 Enviando a OpenAI Whisper...");
     const transcriptionResponse = await openai.audio.transcriptions.create({
-      file: fileObject, // ✅ Fix: Ahora es un File válido
+      file: fileObject,
       model: 'whisper-1',
     });
 
     const originalText = transcriptionResponse.text;
-    console.log("📝 Texto transcrito:", originalText);
 
-    console.log("🔄 Enviando a Deepseek para traducción...");
+    // Modified prompt for Deepseek:
     const deepseekResponse = await deepseek.chat.completions.create({
       model: 'deepseek-chat',
       messages: [
-        { role: 'system', content: "Eres un traductor. Traduce el siguiente texto sin agregar comentarios adicionales." },
-        { role: 'user', content: `Traduce este texto al ${targetLang}: "${originalText}"` },
+        {
+          role: 'system',
+          content:
+            "You are a translator. Translate the following text exactly and return only the translated text, without any additional commentary or formatting."
+        },
+        {
+          role: 'user',
+          content: `Translate this text to ${targetLang}: "${originalText}"`
+        }
       ],
       temperature: 0,
     });
 
     const translatedText = deepseekResponse.choices[0].message?.content || '';
-    console.log("✅ Traducción obtenida:", translatedText);
-
     res.status(200).json({ originalText, translatedText });
   } catch (error) {
-    console.error("❌ Error en transcripción/traducción:", error);
-    res.status(500).json({ error: 'Error al procesar la solicitud' });
+    console.error("❌ Error in transcription/translation:", error);
+    res.status(500).json({ error: 'Error processing the request' });
   }
 };
 
