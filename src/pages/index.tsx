@@ -28,7 +28,7 @@ export default function Home() {
       let data;
       try {
         data = JSON.parse(textResponse);
-      } catch (parseError) {
+      } catch {
         throw new Error("API response is not valid JSON");
       }
     
